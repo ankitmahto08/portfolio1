@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature Pad</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+        }
+        
+        .container {
+            margin-top: 20px;
+        }
+        
+        #signature-pad {
+            border: 2px solid #000;
+            border-radius: 5px;
+            margin: 0 auto;
+            cursor: crosshair;
+        }
+        
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        #clear {
+            background-color: #f44336;
+        }
+        
+        #clear:hover {
+            background-color: #d32f2f;
+        }
+        
+        #download {
+            background-color: #2196F3;
+        }
+        
+        #download:hover {
+            background-color: #0b7dda;
+        }
+        
+        label {
+            font-weight: bold;
+        }
+        
+        input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        input[type="range"] {
+            width: 100px;
+        }
+        
+        .thickness-value {
+            min-width: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Signature Pad</h1>
+    <p>Draw your signature below and customize it with different colors, thickness, and background</p>
+    
+    <div class="container">
+        <canvas id="signature-pad" width="600" height="300"></canvas>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="pen-color">Pen Color:</label>
+                <input type="color" id="pen-color" value="#000000">
+            </div>
+            
+            <div class="control-group">
+                <label for="pen-thickness">Thickness:</label>
+                <input type="range" id="pen-thickness" min="1" max="20" value="3">
+                <span id="thickness-value" class="thickness-value">3</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="bg-color">Background:</label>
+                <input type="color" id="bg-color" value="#ffffff">
+            </div>
+            
+            <button id="clear">Clear</button>
+            <button id="download">Download</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('signature-pad');
+            const context = canvas.getContext('2d');
+            
+            const penColor = document.getElementById('pen-color');
+            const penThickness = document.getElementById('pen-thickness');
+            const thicknessValue = document.getElementById('thickness-value');
+            const bgColor = document.getElementById('bg-color');
+            const clearButton = document.getElementById('clear');
+            const downloadButton = document.getElementById('download');
+            
+            let isDrawing = false;
+            let lastX = 0;
+            let lastY = 0;
+            
+            // Set initial background
+            setBackground();
+            
+            // Event listeners
+            penThickness.addEventListener('input', function() {
+                thicknessValue.textContent = this.value;
+            });
+            
+            bgColor.addEventListener('input', setBackground);
+            
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch support
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', stopDrawing);
+            
+            clearButton.addEventListener('click', clearCanvas);
+            downloadButton.addEventListener('click', downloadSignature);
+            
+            // Drawing functions
+            function startDrawing(e) {
+                isDrawing = true;
+                [lastX, lastY] = getCoordinates(e);
+            }
+            
+            function draw(e) {
+                if (!isDrawing) return;
+                e.preventDefault();
+                
+                const [x, y] = getCoordinates(e);
+                
+                context.strokeStyle = penColor.value;
+                context.lineWidth = penThickness.value;
+                context.lineCap = 'round';
+                context.lineJoin = 'round';
+                
+                context.beginPath();
+                context.moveTo(lastX, lastY);
+                context.lineTo(x, y);
+                context.stroke();
+                
+                [lastX, lastY] = [x, y];
+            }
+            
+            function stopDrawing() {
+                isDrawing = false;
+            }
+            
+            function getCoordinates(e) {
+                const rect = canvas.getBoundingClientRect();
+                return [
+                    e.clientX - rect.left,
+                    e.clientY - rect.top
+                ];
+            }
+            
+            function handleTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            }
+            
+            function handleTouchMove(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            }
+            
+            function clearCanvas() {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                setBackground();
+            }
+            
+            function setBackground() {
+                context.fillStyle = bgColor.value;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            function downloadSignature() {
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'signature.png';
+                link.href = dataURL;
+                link.click();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Typing Speed Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+    }
+    
+    body {
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    
+    .container {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      width: 100%;
+      max-width: 800px;
+      text-align: center;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 1.5rem;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1.5rem;
+    }
+    
+    .stat-box {
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      flex: 1;
+      margin: 0 0.5rem;
+    }
+    
+    .text-display {
+      font-size: 1.3rem;
+      color: #666;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+      text-align: left;
+      background-color: #f9f9f9;
+      padding: 1rem;
+      border-radius: 5px;
+      height: 150px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .highlight {
+      background-color: #e6f3ff;
+    }
+    
+    .correct {
+      color: #2ecc71;
+    }
+    
+    .incorrect {
+      color: #e74c3c;
+      text-decoration: underline;
+    }
+    
+    .current {
+      border-left: 2px solid #3498db;
+      animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+      50% {
+        border-color: transparent;
+      }
+    }
+    
+    .input-area {
+      background-color: #fff;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      resize: none;
+      height: 100px;
+    }
+    
+    .input-area:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+    
+    .input-area.disabled {
+      background-color: #f5f5f5;
+      color: #aaa;
+    }
+    
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+    
+    .results {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #eee;
+      display: none;
+    }
+    
+    .results h2 {
+      color: #3498db;
+      margin-bottom: 1rem;
+    }
+    
+    .result-stats {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+    
+    .result-box {
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      padding: 1rem;
+      margin: 0.5rem;
+      text-align: center;
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .result-box h3 {
+      font-size: 1.5rem;
+      color: #333;
+    }
+    
+    .result-box p {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #3498db;
+      margin: 0.5rem 0;
+    }
+    
+    .result-box span {
+      color: #777;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Typing Speed Test</h1>
+    
+    <div class="stats">
+      <div class="stat-box">Time: <span id="time">60</span>s</div>
+      <div class="stat-box">WPM: <span id="wpm">0</span></div>
+      <div class="stat-box">Accuracy: <span id="accuracy">100</span>%</div>
+    </div>
+    
+    <div class="text-display" id="text-display"></div>
+    
+    <textarea 
+      class="input-area" 
+      id="input-area" 
+      placeholder="Start typing here when ready..." 
+      disabled
+    ></textarea>
+    
+    <div class="buttons">
+      <button id="start-btn">Start Test</button>
+      <button id="reset-btn" disabled>Reset</button>
+    </div>
+    
+    <div class="results" id="results">
+      <h2>Your Results</h2>
+      <div class="result-stats">
+        <div class="result-box">
+          <h3>Speed</h3>
+          <p id="result-wpm">0</p>
+          <span>words per minute</span>
+        </div>
+        <div class="result-box">
+          <h3>Accuracy</h3>
+          <p id="result-accuracy">0</p>
+          <span>percent</span>
+        </div>
+        <div class="result-box">
+          <h3>Time</h3>
+          <p id="result-time">0</p>
+          <span>seconds</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const textDisplay = document.getElementById('text-display');
+    const inputArea = document.getElementById('input-area');
+    const startBtn = document.getElementById('start-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const timeDisplay = document.getElementById('time');
+    const wpmDisplay = document.getElementById('wpm');
+    const accuracyDisplay = document.getElementById('accuracy');
+    const resultsSection = document.getElementById('results');
+    const resultWpm = document.getElementById('result-wpm');
+    const resultAccuracy = document.getElementById('result-accuracy');
+    const resultTime = document.getElementById('result-time');
+
+    // Sample texts for typing test
+    const texts = [
+      "The quick brown fox jumps over the lazy dog. This pangram contains all the letters of the English alphabet. It is commonly used for touch-typing practice and testing typewriters and computer keyboards.",
+      "Programming is the process of creating a set of instructions that tell a computer how to perform a task. Programming can be done using a variety of computer languages, such as JavaScript, Python, and C++.",
+      "The art of typing quickly and accurately is a valuable skill in today's digital world. Regular practice can significantly improve your typing speed and reduce errors, making you more productive.",
+      "Artificial intelligence is the simulation of human intelligence processes by machines, especially computer systems. These processes include learning, reasoning, and self-correction.",
+      "The Internet is a global network of billions of computers and other electronic devices. With the Internet, it's possible to access almost any information, communicate with anyone else in the world, and do much more."
+    ];
+
+    let timer;
+    let timeLeft = 60;
+    let isTyping = false;
+    let currentText = "";
+    let correctCharacters = 0;
+    let incorrectCharacters = 0;
+    let totalCharacters = 0;
+    let startTime;
+    let endTime;
+
+    // Initialize
+    function init() {
+      // Select random text
+      currentText = texts[Math.floor(Math.random() * texts.length)];
+      
+      // Create spans for each character
+      textDisplay.innerHTML = "";
+      currentText.split('').forEach(char => {
+        const charSpan = document.createElement('span');
+        charSpan.innerText = char;
+        textDisplay.appendChild(charSpan);
+      });
+      
+      // Reset stats
+      timeLeft = 60;
+      correctCharacters = 0;
+      incorrectCharacters = 0;
+      totalCharacters = 0;
+      wpmDisplay.textContent = "0";
+      accuracyDisplay.textContent = "100";
+      timeDisplay.textContent = timeLeft;
+      
+      // Hide results
+      resultsSection.style.display = "none";
+      
+      // Reset input area
+      inputArea.value = "";
+      inputArea.disabled = true;
+      
+      // Set button states
+      startBtn.disabled = false;
+      resetBtn.disabled = true;
+    }
+
+    // Start the typing test
+    function startTest() {
+      isTyping = true;
+      inputArea.disabled = false;
+      inputArea.focus();
+      startBtn.disabled = true;
+      resetBtn.disabled = false;
+      startTime = new Date();
+      
+      // Start timer
+      timer = setInterval(() => {
+        timeLeft--;
+        timeDisplay.textContent = timeLeft;
+        
+        // Calculate WPM in real-time
+        const timeElapsed = (60 - timeLeft) / 60;
+        if (timeElapsed > 0) {
+          const wordsTyped = inputArea.value.trim().split(/\s+/).length;
+          const currentWpm = Math.round(wordsTyped / timeElapsed);
+          wpmDisplay.textContent = currentWpm;
+        }
+        
+        if (timeLeft <= 0) {
+          endTest();
+        }
+      }, 1000);
+    }
+
+    // End the typing test
+    function endTest() {
+      isTyping = false;
+      clearInterval(timer);
+      inputArea.disabled = true;
+      endTime = new Date();
+      
+      // Calculate final results
+      const timeElapsed = (endTime - startTime) / 1000;
+      resultTime.textContent = Math.round(60 - timeLeft);
+      
+      const wordsTyped = inputArea.value.trim().split(/\s+/).length;
+      const finalWpm = Math.round(wordsTyped / (timeElapsed / 60));
+      resultWpm.textContent = finalWpm;
+      wpmDisplay.textContent = finalWpm;
+      
+      let accuracy = 100;
+      if (totalCharacters > 0) {
+        accuracy = Math.round((correctCharacters / totalCharacters) * 100);
+      }
+      resultAccuracy.textContent = accuracy;
+      accuracyDisplay.textContent = accuracy;
+      
+      // Show results
+      resultsSection.style.display = "block";
+    }
+
+    // Reset the typing test
+    function resetTest() {
+      clearInterval(timer);
+      init();
+    }
+
+    // Check typing
+    function checkTyping() {
+      const inputText = inputArea.value;
+      const characters = textDisplay.querySelectorAll('span');
+      
+      totalCharacters = inputText.length;
+      correctCharacters = 0;
+      incorrectCharacters = 0;
+      
+      characters.forEach((char, index) => {
+        // Reset all character styling
+        char.classList.remove('correct', 'incorrect', 'current');
+        
+        if (index < inputText.length) {
+          // User has typed this character
+          if (char.innerText === inputText[index]) {
+            char.classList.add('correct');
+            correctCharacters++;
+          } else {
+            char.classList.add('incorrect');
+            incorrectCharacters++;
+          }
+        } else if (index === inputText.length) {
+          // Current position cursor
+          char.classList.add('current');
+        }
+      });
+      
+      // Update accuracy
+      let accuracy = 100;
+      if (totalCharacters > 0) {
+        accuracy = Math.round((correctCharacters / totalCharacters) * 100);
+      }
+      accuracyDisplay.textContent = accuracy;
+      
+      // End test if user types all text
+      if (inputText.length >= currentText.length) {
+        endTest();
+      }
+    }
+
+    // Event listeners
+    startBtn.addEventListener('click', startTest);
+    resetBtn.addEventListener('click', resetTest);
+    inputArea.addEventListener('input', checkTyping);
+
+    // Initialize on load
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
